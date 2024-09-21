@@ -9,9 +9,6 @@ use reqwest::Client;
 use serde::Deserialize;
 use tracing::{debug, error, info, instrument, warn};
 
-const LATITUDE: &str = "25";
-const LONGITUDE: &str = "-80";
-
 #[derive(Debug)]
 enum WeatherError {
     BadReply(String),
@@ -87,7 +84,7 @@ pub async fn get_weather(client: web::Data<Client>, pos: Json<WeatherPosition>) 
     HttpResponse::Ok().body(return_val)
 }
 
-#[instrument(name = "Get Weather", skip(client), target = "backend", fields(latitude = LATITUDE, longitude = LONGITUDE))]
+#[instrument(name = "Get Weather", skip(client), target = "backend")]
 async fn lat_weather(
     client: web::Data<reqwest::Client>,
     lat: &str,

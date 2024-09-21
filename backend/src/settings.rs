@@ -11,11 +11,6 @@ pub struct Settings {
 }
 
 #[derive(Deserialize, Clone, Debug)]
-pub struct Secret {
-    pub open_ai_key: OpenAI,
-}
-
-#[derive(Deserialize, Clone, Debug)]
 pub struct OpenAI {
     pub api_key: String,
     pub engine: String,
