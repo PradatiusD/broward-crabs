@@ -3,16 +3,25 @@ use std::fmt::Display;
 use actix_web::{
     post,
     web::{self, Json},
-    HttpResponse,
+    HttpResponse, Responder, ResponseError,
 };
 use reqwest::Client;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tracing::{debug, error, info, instrument, warn};
 
 #[derive(Debug)]
 enum WeatherError {
     BadReply(String),
     BadResponse(String),
+}
+
+impl ResponseError for WeatherError {
+    fn error_response(&self) -> HttpResponse {
+        match self {
+            Self::BadReply(_err) => HttpResponse::InternalServerError().into(),
+            Self::BadResponse(_err) => HttpResponse::InternalServerError().into(),
+        }
+    }
 }
 
 impl Display for WeatherError {
@@ -44,7 +53,7 @@ impl From<serde_json::Error> for WeatherError {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct WeatherForecast {
     forecast: String,
 }
@@ -74,8 +83,6 @@ pub async fn get_weather(client: web::Data<Client>, pos: Json<WeatherPosition>) 
             String::new()
         }
     };
-
-    // info!("Returning: {}", return_val);
 
     if return_val.is_empty() {
         return HttpResponse::InternalServerError().body("Error getting weather");
@@ -161,7 +168,7 @@ async fn lat_weather(
         .send()
         .await
         .unwrap_or_else(|err| {
-            warn!("Error getting forecast: {:#?}", err);
+            error!("Error getting forecast: {:#?}", err);
             panic!("Error getting forecast: {err:#?}")
         });
 
@@ -189,4 +196,83 @@ async fn lat_weather(
         .to_string();
 
     Ok(WeatherForecast { forecast })
+}
+
+#[derive(Debug, Deserialize)]
+struct PrevWeather {
+    begin_date: String,
+    end_date: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct DaysPrevious {
+    days_previous: i64,
+}
+
+/// # Result
+///   - Returns a `Result` of `String` if successful
+/// # Errors
+///   - Returns a `WeatherError` if there is an error getting the weather
+#[instrument(
+    name = "Get Past Weather",
+    skip(client, days_previous),
+    target = "backend",
+    level = "debug"
+)]
+#[post("/get_past_weather")]
+pub async fn previous_weather(
+    client: web::Data<reqwest::Client>,
+    days_previous: web::Json<DaysPrevious>,
+) -> Result<impl Responder, WeatherError> {
+    info!(
+        "Getting the previous weather for the past: {} days",
+        days_previous.days_previous
+    );
+
+    // Calculate the previous date based on the number of days from today
+    let todays_date = chrono::Local::now().date_naive();
+    debug!("Today's date: {todays_date}");
+    let begin_date = todays_date - chrono::Duration::days(days_previous.days_previous);
+    debug!("Begin date: {begin_date}");
+
+    let dates = PrevWeather {
+        begin_date: begin_date.to_string(),
+        end_date: todays_date.to_string(),
+    };
+
+    let url = format!(
+		"https://api.weather.gov/gridpoints/MLB/25,80/forecast?startTime={}T00:00:00-04:00&endTime={}T00:00:00-04:00", dates.begin_date, dates.end_date
+
+    );
+
+    debug!("URL returned by the gov API: {url}");
+
+    let resp = client
+        .get(&url)
+        .send()
+        .await
+        .expect("Unable to get the response");
+    let body = resp.text().await.expect("Unable to get the body");
+
+    let json: serde_json::Value = serde_json::from_str(&body)?;
+    if *json.get("status").unwrap_or(&serde_json::Value::from("")) != "" {
+        return Err(WeatherError::BadResponse(
+            json.get("status")
+                .expect("Unable to parse json")
+                .to_string(),
+        ));
+    }
+
+    let forecast = json
+        .get("properties")
+        .expect("Unable to parse json")
+        .get("temperature")
+        .expect("Unable to parse json")
+        .get("values")
+        .expect("Unable to parse json")
+        .to_string();
+
+    let forecast = WeatherForecast { forecast };
+
+    Ok(HttpResponse::Ok().json(forecast))
 }

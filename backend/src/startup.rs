@@ -18,7 +18,7 @@ use crate::{
     },
     open_ai::ai,
     settings::{self, Settings},
-    weather::get_weather,
+    weather::{get_weather, previous_weather},
 };
 
 pub struct Application {
@@ -116,6 +116,7 @@ async fn run(
             .app_data(redis_pool.clone())
             .app_data(Data::new(reqwest_cliet.clone()))
             .app_data(Data::new(settings.clone()))
+            .service(health_check)
             .service(
                 web::scope("/v1")
                     // Database operations
@@ -128,7 +129,7 @@ async fn run(
                     .service(get_traffic)
                     // Non-db operations
                     .service(get_weather)
-                    .service(health_check)
+                    .service(previous_weather)
                     .service(ai),
             )
     })
