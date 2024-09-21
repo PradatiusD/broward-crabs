@@ -12,7 +12,7 @@ use crate::models::mongo::{MongoRepo, TrafficData, User};
 #[post("/user")]
 pub async fn create(client: Data<mongodb::Database>, new_user: Json<User>) -> HttpResponse {
     info!("Creating user");
-    let db = MongoRepo::new(client.collection("users"));
+    let db = MongoRepo::new(client.collection("users"), None);
     let data = new_user.into_inner();
     debug!("Creating user: {:#?}", data);
 
@@ -29,7 +29,7 @@ pub async fn create(client: Data<mongodb::Database>, new_user: Json<User>) -> Ht
 
 #[get("/user/{id}")]
 pub async fn get_user(client: Data<mongodb::Database>, path: Path<String>) -> HttpResponse {
-    let db = MongoRepo::new(client.collection("users"));
+    let db = MongoRepo::new(client.collection("users"), None);
     let user_id = path.into_inner();
 
     if user_id.is_empty() {
@@ -53,7 +53,7 @@ pub async fn update_user(
     path: Path<String>,
     new_user: Json<User>,
 ) -> HttpResponse {
-    let db = MongoRepo::new(client.collection("users"));
+    let db = MongoRepo::new(client.collection("users"), None);
 
     let user_id = path.into_inner();
 
@@ -94,7 +94,7 @@ pub async fn update_user(
 
 #[delete("/user/{id}")]
 pub async fn delete_user(client: Data<mongodb::Database>, path: Path<String>) -> HttpResponse {
-    let db = MongoRepo::new(client.collection("users"));
+    let db = MongoRepo::new(client.collection("users"), None);
     let user_id = path.into_inner();
 
     if user_id.is_empty() {
@@ -121,7 +121,7 @@ pub async fn delete_user(client: Data<mongodb::Database>, path: Path<String>) ->
 
 #[get("/users")]
 pub async fn get_users(client: Data<mongodb::Database>) -> HttpResponse {
-    let db = MongoRepo::new(client.collection("users"));
+    let db = MongoRepo::new(client.collection("users"), None);
     info!("Getting all users");
     let users = db.get_all_users().await;
 
@@ -140,7 +140,11 @@ pub async fn create_traffic(
     new_traffic: Json<TrafficData>,
 ) -> HttpResponse {
     info!("Creating traffic log");
-    let db = MongoRepo::new(client.collection("traffic"));
+    let db = MongoRepo::new(
+        client.collection("user"),
+        Some(client.collection("traffic")),
+    );
+
     let data = new_traffic.into_inner();
     debug!("Creating user: {:#?}", data);
 

@@ -6,7 +6,7 @@ use mongodb::{
 };
 use serde::{Deserialize, Serialize};
 use std::fmt::{self, Display, Formatter};
-use tracing::error;
+use tracing::{error, instrument};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct User {
@@ -48,17 +48,27 @@ impl Display for User {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TrafficData {
+    #[serde(rename = "CreateTime")]
     pub create_time: String,
+    #[serde(rename = "Signal")]
     pub signal: String,
+    #[serde(rename = "Address")]
     pub address: String,
+    #[serde(rename = "Location")]
     pub location: String,
+    #[serde(rename = "Grid")]
     pub grid: String,
+    #[serde(rename = "MapX")]
     pub map_x: Option<String>,
+    #[serde(rename = "MapY")]
     pub map_y: Option<String>,
+    #[serde(rename = "Longitude")]
     pub longitude: f64,
+    #[serde(rename = "Latitude")]
     pub latitude: f64,
 }
 
+#[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]
 pub struct MongoRepo {
     collection: Collection<User>,
@@ -67,10 +77,13 @@ pub struct MongoRepo {
 
 impl MongoRepo {
     #[must_use]
-    pub const fn new(collection: Collection<User>) -> Self {
+    pub const fn new(
+        collection: Collection<User>,
+        traffic_collection: Option<Collection<TrafficData>>,
+    ) -> Self {
         Self {
             collection,
-            traffic_collection: None,
+            traffic_collection,
         }
     }
 
@@ -297,19 +310,8 @@ impl MongoRepo {
     ///   - Returns an `Error` if the document fails to update in the collection
     /// # Panics
     ///   - If the document fails to update in the collection
-    pub async fn save_traffic(&self, traffic: TrafficData) -> Result<(), Error> {
-        //  {
-        //     "CreateTime": "2024-09-20T16:59:34",
-        //     "Signal": "TRAFFIC ACCIDENT WITH INJURIES",
-        //     "Address": "NW 33RD ST / NW 87TH AVE",
-        //     "Location": "KENDALL REG : LAT: <25.805839>  LONG: <-80.337773>",
-        //     "Grid": "1066",
-        //     "MapX": null,
-        //     "MapY": null,
-        //     "Longitude": -80.33726338,
-        //     "Latitude": 25.80530441
-        // }
-
+    #[instrument(name = "Save Traffic", target = "backend", fields(create_time = %traffic.create_time))]
+    pub async fn save_traffic(&self, traffic: TrafficData) -> Result<InsertOneResult, Error> {
         let traffic = TrafficData {
             create_time: traffic.create_time,
             signal: traffic.signal,
@@ -322,13 +324,14 @@ impl MongoRepo {
             latitude: traffic.latitude,
         };
 
-        self.traffic_collection
-            .clone()
-            .expect("Traffic collection not found")
-            .insert_one(traffic)
-            .await
-            .expect("Failed to insert document into collection");
-
-        Ok(())
+        match self.traffic_collection.as_ref() {
+            Some(collection) => Ok(collection
+                .insert_one(traffic)
+                .await
+                .expect("Failed to insert document into collection")),
+            None => Err(Error::DeserializationError {
+                message: "Traffic collection not found".to_string(),
+            }),
+        }
     }
 }
