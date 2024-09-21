@@ -44,7 +44,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 - Database: Redis
 
 ## API 
-- POST: /v1/traffic  -> Save a `list` of traffic data in the form of 
+### POST: /v1/traffic  -> Save a `list` of traffic data in the form of 
 ```
 [
     {
@@ -61,9 +61,11 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 ]
 ```
 
-- GET: /v1/traffic/_id -> Get a the matching traffic data with the `_id`
 
-- POST: /v1/weather -> Get the weather data using the form
+
+### GET: /v1/traffic/id -> Get the matching traffic data with the `id`
+
+### POST: /v1/weather -> Get the weather data using the form
 ```
 {
 	"Longitude": f64,
@@ -71,13 +73,44 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 }
 ```
 
-- GET: /v1/health_check -> Is the server running?
+### GET: /v1/health_check -> Is the server running?
 
-- POST: /v1/ai -> Get the AI prediction using the form
+### POST: /v1/ai -> Get the AI prediction using the form
 ```
 {
 	"question": String,
 }
 ```
 
+### POST: /v1/get_past_weather -> Get the past weather data using the form
+```
+{
+	"days_previous": i64,
+	"query_index": u16
+}
+```
 
+### POST: /v1/user -> Creates a new user using the form
+```
+{
+	"username": String,
+	"password": String,
+	"email": String,
+}
+```
+
+### GET: /v1/user/id -> Get the user data with the `id`
+
+
+### PUT: /v1/user/id -> Update a user using the form
+```
+{
+	"username": String,
+	"password": String,
+	"email": String,
+}
+```
+
+### DELETE: /v1/user/id -> Delete the user with the `id`
+
+### GET: /v1/users -> Get all the users
