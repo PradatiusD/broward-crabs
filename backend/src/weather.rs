@@ -1,6 +1,10 @@
 use std::fmt::Display;
 
-use actix_web::{get, web, HttpResponse};
+use actix_web::{
+    post,
+    web::{self, Json},
+    HttpResponse,
+};
 use reqwest::Client;
 use serde::Deserialize;
 use tracing::{debug, error, info, instrument, warn};
@@ -48,12 +52,25 @@ struct WeatherForecast {
     forecast: String,
 }
 
-#[instrument(name = "Get Weather", skip(client), target = "backend", fields(latitude = LATITUDE, longitude = LONGITUDE))]
-#[get("/get_weather")]
+#[derive(Debug, Deserialize)]
+struct WeatherPosition {
+    latitude: f64,
+    longitude: f64,
+}
+
+#[instrument(name = "Get Weather", skip(client), target = "backend")]
+#[post("/get_weather")]
 /// Get the weather forcast based on the latitude and longitude
-pub async fn get_weather(client: web::Data<reqwest::Client>) -> HttpResponse {
-    warn!("Getting weather");
-    let return_val = match lat_weather(client, LATITUDE, LONGITUDE).await {
+pub async fn get_weather(client: web::Data<Client>, pos: Json<WeatherPosition>) -> HttpResponse {
+    info!("Latitude: {}", pos.latitude);
+    info!("Longitude: {}", pos.longitude);
+    let return_val = match lat_weather(
+        client,
+        &pos.latitude.to_string(),
+        &pos.longitude.to_string(),
+    )
+    .await
+    {
         Ok(forecast) => forecast.forecast,
         Err(err) => {
             error!("Error getting weather: {}", err);
@@ -61,7 +78,7 @@ pub async fn get_weather(client: web::Data<reqwest::Client>) -> HttpResponse {
         }
     };
 
-    info!("Returning: {}", return_val);
+    // info!("Returning: {}", return_val);
 
     if return_val.is_empty() {
         return HttpResponse::InternalServerError().body("Error getting weather");
@@ -91,7 +108,6 @@ async fn lat_weather(
         .send()
         .await?;
     let body = resp.text().await?;
-    warn!("Body: {}", body);
 
     let json: serde_json::Value = serde_json::from_str(&body)?;
     if *json.get("status").unwrap_or(&serde_json::Value::from("")) != "" {
@@ -135,7 +151,7 @@ async fn lat_weather(
         key.replace('\"', ""),
     );
 
-    warn!("The second URL: {}", url);
+    warn!("The second URL parsed on the first URL: {}", url);
 
     let resp = client
         .into_inner()
@@ -156,8 +172,6 @@ async fn lat_weather(
 
     let body = resp.text().await?;
 
-    info!("forecast body: {}", body);
-
     let json: serde_json::Value = serde_json::from_str(&body)?;
 
     if *json.get("status").unwrap_or(&serde_json::Value::from("")) != "" {
@@ -167,8 +181,6 @@ async fn lat_weather(
                 .to_string(),
         ));
     }
-
-    info!("forecast data: {:#?}", json);
 
     let forecast = json
         .get("properties")

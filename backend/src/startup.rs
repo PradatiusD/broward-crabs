@@ -1,6 +1,11 @@
 use std::net;
 
-use actix_web::{http::KeepAlive, middleware, web::Data, App, HttpServer};
+use actix_web::{
+    http::KeepAlive,
+    middleware,
+    web::{self, Data},
+    App, HttpServer,
+};
 use mongodb::{Client, Database};
 use tracing::{error, info, instrument};
 
@@ -111,17 +116,21 @@ async fn run(
             .app_data(redis_pool.clone())
             .app_data(Data::new(reqwest_cliet.clone()))
             .app_data(Data::new(settings.clone()))
-            .service(get_weather)
-            .service(health_check)
-            .service(ai)
-            // Database operations
-            .service(create)
-            .service(get_user)
-            .service(update_user)
-            .service(delete_user)
-            .service(get_users)
-            .service(create_traffic)
-            .service(get_traffic)
+            .service(
+                web::scope("/v1")
+                    // Database operations
+                    .service(create)
+                    .service(get_user)
+                    .service(update_user)
+                    .service(delete_user)
+                    .service(get_users)
+                    .service(create_traffic)
+                    .service(get_traffic)
+                    // Non-db operations
+                    .service(get_weather)
+                    .service(health_check)
+                    .service(ai),
+            )
     })
     .keep_alive(KeepAlive::Os) // Keep the connection alive; OS handled
     .disable_signals() // Disable the signals to allow the OS to handle the signals

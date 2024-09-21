@@ -184,7 +184,7 @@ pub async fn create_traffic(
     HttpResponse::Ok().json(results)
 }
 
-#[post("/traffic/{id}")]
+#[get("/traffic/{id}")]
 pub async fn get_traffic(client: Data<mongodb::Database>, path: Path<String>) -> HttpResponse {
     let db = MongoRepo::new(
         client.collection("user"),

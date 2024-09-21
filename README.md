@@ -38,10 +38,46 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 # Backend
 
-## Getting Started
+## Details
 - Port: 8099
 - Database: MongoDB
 - Database: Redis
 
 ## API 
+- POST: /v1/traffic  -> Save a `list` of traffic data in the form of 
+```
+[
+    {
+        "CreateTime": String,
+        "Signal": String,
+        "Address": String,
+        "Location": Option<String>,
+        "Grid": String,
+        "MapX": Option<f64>,
+        "MapY": Option<f64>,
+        "Longitude": f64,
+        "Latitude": f64,
+    }
+]
+```
+
+- GET: /v1/traffic/_id -> Get a the matching traffic data with the `_id`
+
+- POST: /v1/weather -> Get the weather data using the form
+```
+{
+	"Longitude": f64,
+	"Latitude": f64,
+}
+```
+
+- GET: /v1/health_check -> Is the server running?
+
+- POST: /v1/ai -> Get the AI prediction using the form
+```
+{
+	"question": String,
+}
+```
+
 
