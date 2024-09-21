@@ -6,6 +6,9 @@
     font-weight: 600;
     line-height: 120%;
 }
+.lookup-background {
+    background-image: url("");
+}
 .zip-code {
     border-radius: 4px;
 }
