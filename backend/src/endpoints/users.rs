@@ -1,9 +1,11 @@
+use std::collections::BTreeMap;
+
 use actix_web::{
     delete, get, post, put,
     web::{Data, Json, Path},
     HttpResponse,
 };
-use mongodb::bson::oid::ObjectId;
+use mongodb::bson::{oid::ObjectId, Bson};
 use tracing::{debug, error, info, instrument};
 
 use crate::models::mongo::{MongoRepo, TrafficData, User};
@@ -134,10 +136,16 @@ pub async fn get_users(client: Data<mongodb::Database>) -> HttpResponse {
     )
 }
 
+#[instrument(
+    level = "debug",
+    name = "Save Traffic Log",
+    target = "backend",
+    skip(client, new_traffic)
+)]
 #[post("/traffic")]
 pub async fn create_traffic(
     client: Data<mongodb::Database>,
-    new_traffic: Json<TrafficData>,
+    new_traffic: Json<Vec<TrafficData>>,
 ) -> HttpResponse {
     info!("Creating traffic log");
     let db = MongoRepo::new(
@@ -148,15 +156,32 @@ pub async fn create_traffic(
     let data = new_traffic.into_inner();
     debug!("Creating user: {:#?}", data);
 
-    let traffic_details = db.save_traffic(data).await;
+    // let traffic_details = db.save_traffic(data).await;
 
-    traffic_details.map_or_else(
-        |err| {
-            error!("Error creating traffic log: {err:#?}");
-            HttpResponse::InternalServerError().finish()
-        },
-        |traffic| HttpResponse::Ok().json(traffic),
-    )
+    let mut results: BTreeMap<usize, String> = BTreeMap::new();
+
+    for (i, traffic) in data.iter().enumerate() {
+        let traffic_details = db.save_traffic(traffic).await;
+
+        match traffic_details {
+            Ok(traffic) => {
+                results.insert(
+                    i,
+                    traffic
+                        .inserted_id
+                        .as_object_id()
+                        .expect("Invalid ID")
+                        .to_string(),
+                );
+            }
+            Err(err) => {
+                error!("Error creating traffic log: {err:#?}");
+                return HttpResponse::InternalServerError().finish();
+            }
+        }
+    }
+
+    HttpResponse::Ok().json(results)
 }
 
 #[post("/traffic/{id}")]

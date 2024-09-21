@@ -55,7 +55,7 @@ pub struct TrafficData {
     #[serde(rename = "Address")]
     pub address: String,
     #[serde(rename = "Location")]
-    pub location: String,
+    pub location: Option<String>,
     #[serde(rename = "Grid")]
     pub grid: String,
     #[serde(rename = "MapX")]
@@ -311,15 +311,15 @@ impl MongoRepo {
     /// # Panics
     ///   - If the document fails to update in the collection
     #[instrument(name = "Save Traffic", target = "backend", fields(create_time = %traffic.create_time))]
-    pub async fn save_traffic(&self, traffic: TrafficData) -> Result<InsertOneResult, Error> {
+    pub async fn save_traffic(&self, traffic: &TrafficData) -> Result<InsertOneResult, Error> {
         let traffic = TrafficData {
-            create_time: traffic.create_time,
-            signal: traffic.signal,
-            address: traffic.address,
-            location: traffic.location,
-            grid: traffic.grid,
-            map_x: traffic.map_x,
-            map_y: traffic.map_y,
+            create_time: traffic.create_time.clone(),
+            signal: traffic.signal.clone(),
+            address: traffic.address.clone(),
+            location: traffic.location.clone(),
+            grid: traffic.grid.clone(),
+            map_x: traffic.map_x.clone(),
+            map_y: traffic.map_y.clone(),
             longitude: traffic.longitude,
             latitude: traffic.latitude,
         };
