@@ -38,3 +38,5 @@ dotenv = "0.15.0"
 mongodb = "3.1.0"
 serde = { version = "1.0.210", features = ["derive"] }
 simplelog = "0.12.2"
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt", "json", "registry", "std", "tracing-log"] }

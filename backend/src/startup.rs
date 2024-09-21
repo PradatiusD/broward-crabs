@@ -7,9 +7,6 @@ use tracing::error;
 use crate::{
     endpoints::{
         health::health_check,
-        index::index,
-        login::{login, register, registration, submit_login},
-        templates::{favicon, htmx, response_targets, source_map, stylesheet},
         users::{create, delete_user, get_user, get_users, update_user},
     },
     settings::{self, Settings},
@@ -105,16 +102,6 @@ async fn run(
             .wrap(middleware::Logger::default())
             .app_data(db_data.clone())
             .app_data(redis_pool.clone())
-            .service(favicon)
-            .service(stylesheet)
-            .service(source_map)
-            .service(htmx)
-            .service(response_targets)
-            .service(login)
-            .service(index)
-            .service(submit_login)
-            .service(registration)
-            .service(register)
             // Database operations
             .service(create)
             .service(get_user)
