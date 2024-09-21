@@ -158,3 +158,27 @@ pub async fn create_traffic(
         |traffic| HttpResponse::Ok().json(traffic),
     )
 }
+
+#[post("/traffic/{id}")]
+pub async fn get_traffic(client: Data<mongodb::Database>, path: Path<String>) -> HttpResponse {
+    let db = MongoRepo::new(
+        client.collection("user"),
+        Some(client.collection("traffic")),
+    );
+
+    let user_id = path.into_inner();
+
+    if user_id.is_empty() {
+        return HttpResponse::BadRequest().into();
+    }
+
+    let traffic_details = db.get_traffic(&user_id).await;
+
+    traffic_details.map_or_else(
+        |err| {
+            error!("Error getting traffic log: {err:#?}");
+            HttpResponse::InternalServerError().finish()
+        },
+        |traffic| HttpResponse::Ok().json(traffic),
+    )
+}

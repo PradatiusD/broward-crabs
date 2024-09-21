@@ -334,4 +334,31 @@ impl MongoRepo {
             }),
         }
     }
+
+    /// # Results
+    ///   - Returns a `TrafficData` if the traffic is successfully found in the collection
+    /// # Errors
+    ///   - Returns an `Error` if the document fails to find in the collection
+    /// # Panics
+    ///   - If the document fails to find in the collection
+    pub async fn get_traffic(&self, id: &str) -> Result<TrafficData, Error> {
+        let Ok(object_id) = ObjectId::parse_str(id) else {
+            return Err(Error::DeserializationError {
+                message: "Failed to parse ObjectId".to_string(),
+            });
+        };
+
+        let filter = doc! { "_id": object_id };
+
+        match self.traffic_collection.as_ref() {
+            Some(collection) => Ok(collection
+                .find_one(filter)
+                .await
+                .expect("Failed to find document in collection")
+                .expect("Failed to find traffic")),
+            None => Err(Error::DeserializationError {
+                message: "Traffic collection not found".to_string(),
+            }),
+        }
+    }
 }

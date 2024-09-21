@@ -7,7 +7,9 @@ use tracing::error;
 use crate::{
     endpoints::{
         health::health_check,
-        users::{create, create_traffic, delete_user, get_user, get_users, update_user},
+        users::{
+            create, create_traffic, delete_user, get_traffic, get_user, get_users, update_user,
+        },
     },
     settings::{self, Settings},
     weather::get_weather,
@@ -106,6 +108,7 @@ async fn run(
             .service(delete_user)
             .service(get_users)
             .service(create_traffic)
+            .service(get_traffic)
     })
     .keep_alive(KeepAlive::Os) // Keep the connection alive; OS handled
     .disable_signals() // Disable the signals to allow the OS to handle the signals
