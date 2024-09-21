@@ -1,7 +1,7 @@
 use std::net;
 
 use actix_web::{http::KeepAlive, middleware, web::Data, App, HttpServer};
-use mongodb::Database;
+use mongodb::{Client, Database};
 use tracing::error;
 
 use crate::{
@@ -13,7 +13,6 @@ use crate::{
 };
 
 pub struct Application {
-    port: u16,
     server: actix_web::dev::Server,
 }
 
@@ -40,15 +39,9 @@ impl Application {
         );
 
         let listener: net::TcpListener = net::TcpListener::bind(&address)?;
-        let port = listener.local_addr()?.port();
         let server = run(listener, connection_pool, settings).await?;
 
-        Ok(Self { port, server })
-    }
-
-    #[must_use]
-    pub const fn port(&self) -> u16 {
-        self.port
+        Ok(Self { server })
     }
 
     /// # Result
@@ -72,7 +65,7 @@ pub async fn get_connection_pool(settings: &settings::Mongo) -> mongodb::Databas
     let mut client_options = settings.mongo_options().await;
     client_options.app_name = Some(settings.clone().db);
 
-    let client = match mongodb::Client::with_options(client_options) {
+    let client = match Client::with_options(client_options) {
         Ok(client) => client,
         Err(err) => {
             error!("Failed to connect to MongoDB: {err}\nExiting...");
@@ -82,6 +75,7 @@ pub async fn get_connection_pool(settings: &settings::Mongo) -> mongodb::Databas
     client.database(&settings.db)
 }
 
+#[allow(clippy::unused_async)]
 async fn run(
     listener: std::net::TcpListener,
     db_pool: mongodb::Database,

@@ -2,17 +2,17 @@ application:
   port: 8099
 
 mongo:
-  username: ""
-  password: ""
+  username: "djhunter67"
+  password: "CoZlljWy08JRwH5g"
+  host: "floodflow.mnnum.mongodb.net/"
   port: 27017
-  host: "127.0.0.1"
   db: "broward_crab"
   collection: "backend"
-  require_auth: false
+  require_auth: true
 
 redis:
   url: "redis://127.0.0.1:6379"
   pool_max_open: 16
   pool_max_idle: 8
   pool_timeout_seconds: 1
-  pool_expire_second: 60
+  pool_expire_seconds: 60

@@ -1,4 +1,4 @@
-use mongodb::options::ClientOptions;
+use mongodb::options::{ClientOptions, ServerApi, ServerApiVersion};
 use serde::Deserialize;
 
 /// Global setting for exposing all preconfigured variables
@@ -56,8 +56,8 @@ impl Mongo {
     pub async fn mongo_options(&self) -> ClientOptions {
         let login_config = if self.require_auth {
             format!(
-                "mongodb://{}:{}@{}:{}/{}?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.3.0",
-                self.username, self.password, self.host, self.port, self.db
+                "mongodb+srv://{}:{}@{}?retryWrites=true&w=majority&appName=FloodFlow",
+                self.username, self.password, self.host
             )
         } else {
             format!(
@@ -65,9 +65,15 @@ impl Mongo {
                 self.host, self.port, self.db
             )
         };
-        ClientOptions::parse(login_config)
+        let mut client_options = ClientOptions::parse(login_config)
             .await
-            .expect("Unable to parse the MongoDB environment variables")
+            .expect("Unable to parse the MongoDB environment variables");
+
+        let server_api = ServerApi::builder().version(ServerApiVersion::V1).build();
+
+        client_options.server_api = Some(server_api);
+
+        client_options
     }
 }
 
