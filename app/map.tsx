@@ -1,6 +1,6 @@
 'use client'
 import React from 'react'
-import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 
 const containerStyle = {
   width: '100%',
@@ -12,6 +12,19 @@ const center = {
   lng: -80.1918
 };
 
+type TrafficData = {
+  CreateTime: string,
+  Signal: string,
+  Address: string,
+  Location: string,
+  Grid: string,
+  MapX: null,
+  MapY: null,
+  Longitude: number,
+  Latitude: number
+}
+
+
 function MapComponent() {
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
@@ -19,6 +32,11 @@ function MapComponent() {
   })
 
   const [, setMap] = React.useState(null)
+  const [trafficData, setTrafficData] = React.useState([])<TrafficData[]>
+
+  React.useEffect(() => {
+    setTrafficData(window.trafficData as TrafficData[])
+  })
 
   const onLoad = React.useCallback(function callback(map) {
     setMap(map)
@@ -28,8 +46,11 @@ function MapComponent() {
     setMap(null)
   }, [])
 
+  if (!isLoaded) {
+    return <></>
+  }
 
-  return isLoaded ? (
+  return (
     <GoogleMap
       mapContainerStyle={containerStyle}
       center={center}
@@ -37,10 +58,15 @@ function MapComponent() {
       onLoad={onLoad}
       onUnmount={onUnmount}
     >
-      { /* Child components, such as markers, info windows, etc. */ }
-      <></>
+      {
+        trafficData.map((trafficDataItem, index) => {
+          return (
+            <Marker key={index} label={trafficDataItem.Signal} position={{lat: trafficDataItem.Latitude, lng: trafficDataItem.Longitude}}/>
+          )
+        })
+      }
     </GoogleMap>
-  ) : <></>
+  )
 }
 
 export default MapComponent
