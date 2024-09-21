@@ -56,6 +56,7 @@ impl From<serde_json::Error> for WeatherError {
 #[derive(Debug, Deserialize, Serialize)]
 struct WeatherForecast {
     forecast: String,
+    area: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -105,7 +106,7 @@ async fn lat_weather(
         .into_inner()
         .as_ref()
         .get(&url)
-        .header("User-Agent", "/0.1.0")
+        .header("User-Agent", "floodflow/0.1.0")
         .header("Accept", "*/*")
         .header("Connection", "keep-alive")
         .header("Host", "api.weather.gov")
@@ -161,7 +162,7 @@ async fn lat_weather(
         .into_inner()
         .as_ref()
         .get(url)
-        .header("User-Agent", "old_mcdonald/0.1.0")
+        .header("User-Agent", "floodflow/0.1.0")
         .header("Accept", "*/*")
         .header("Connection", "keep-alive")
         .header("Host", "api.weather.gov")
@@ -195,18 +196,21 @@ async fn lat_weather(
         .expect("Unable to parse json")
         .to_string();
 
-    Ok(WeatherForecast { forecast })
+    Ok(WeatherForecast {
+        forecast,
+        area: format!("{grid_x} {grid_y}"),
+    })
 }
 
 #[derive(Debug, Deserialize)]
 struct PrevWeather {
-    begin_date: String,
-    end_date: String,
+    target_date: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 struct DaysPrevious {
     days_previous: i64,
+    query_index: u16,
 }
 
 /// # Result
@@ -236,23 +240,31 @@ pub async fn previous_weather(
     debug!("Begin date: {begin_date}");
 
     let dates = PrevWeather {
-        begin_date: begin_date.to_string(),
-        end_date: todays_date.to_string(),
+        target_date: begin_date.to_string(),
     };
 
-    let url = format!(
-		"https://api.weather.gov/gridpoints/MLB/25,80/forecast?startTime={}T00:00:00-04:00&endTime={}T00:00:00-04:00", dates.begin_date, dates.end_date
+    // Get the weather for the begin date only
 
+    let url = format!(
+        "https://api.weather.gov/alerts?start={target_date}T00:00:00Z&end={target_date}T23:59:59Z",
+        target_date = dates.target_date
     );
 
-    debug!("URL returned by the gov API: {url}");
-
     let resp = client
+        .clone()
+        .into_inner()
+        .as_ref()
         .get(&url)
+        .header("User-Agent", "floodflow/0.1.0")
+        .header("Accept", "*/*")
+        .header("Connection", "keep-alive")
+        .header("Host", "api.weather.gov")
         .send()
-        .await
-        .expect("Unable to get the response");
+        .await?;
+
     let body = resp.text().await.expect("Unable to get the body");
+
+    debug!("data from the weather service: {body}");
 
     let json: serde_json::Value = serde_json::from_str(&body)?;
     if *json.get("status").unwrap_or(&serde_json::Value::from("")) != "" {
@@ -263,16 +275,24 @@ pub async fn previous_weather(
         ));
     }
 
-    let forecast = json
+    let forecast = json.get("features").expect("Unable to parse features")[0]
+        // .expect("Unable to parse 0")
         .get("properties")
-        .expect("Unable to parse json")
-        .get("temperature")
-        .expect("Unable to parse json")
-        .get("values")
-        .expect("Unable to parse json")
-        .to_string();
+        .expect("Unable to parse properties")
+        .get("event")
+        .expect("Unable to parse event");
 
-    let forecast = WeatherForecast { forecast };
+    let area = json.get("features").expect("Unable to parse features")[0]
+        // .expect("Unable to parse 0")
+        .get("properties")
+        .expect("Unable to parse properties")
+        .get("areaDesc")
+        .expect("Unable to parse areaDesc");
+
+    let forecast = WeatherForecast {
+        forecast: forecast.to_string(),
+        area: area.to_string(),
+    };
 
     Ok(HttpResponse::Ok().json(forecast))
 }
