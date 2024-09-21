@@ -2,7 +2,7 @@ use std::net;
 
 use actix_web::{http::KeepAlive, middleware, web::Data, App, HttpServer};
 use mongodb::{Client, Database};
-use tracing::error;
+use tracing::{error, info, instrument};
 
 use crate::{
     endpoints::{
@@ -58,6 +58,12 @@ impl Application {
     }
 }
 
+#[instrument(
+    name = "get_connection_pool",
+    skip(settings),
+    target = "backend",
+    level = "info"
+)]
 /// # Result
 ///  - `Ok(Database)` if the connection pool was successfully created
 /// # Errors
@@ -66,6 +72,7 @@ impl Application {
 ///  - If the connection pool could not be created
 pub async fn get_connection_pool(settings: &settings::Mongo) -> mongodb::Database {
     let mut client_options = settings.mongo_options().await;
+    info!("Getting db settings...");
     client_options.app_name = Some(settings.clone().db);
 
     let client = match Client::with_options(client_options) {
@@ -75,6 +82,7 @@ pub async fn get_connection_pool(settings: &settings::Mongo) -> mongodb::Databas
             std::process::exit(1);
         }
     };
+    info!("Connected to MongoDB");
     client.database(&settings.db)
 }
 
@@ -93,12 +101,14 @@ async fn run(
         .create_pool(Some(deadpool_redis::Runtime::Tokio1))
         .expect("Failed to create Redis pool");
     let redis_pool = Data::new(redis_pool);
+    let reqwest_cliet = reqwest::Client::new();
 
     let server = HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
             .app_data(db_data.clone())
             .app_data(redis_pool.clone())
+            .app_data(Data::new(reqwest_cliet.clone()))
             .service(get_weather)
             .service(health_check)
             // Database operations

@@ -51,7 +51,8 @@ struct WeatherForecast {
 #[instrument(name = "Get Weather", skip(client), target = "backend", fields(latitude = LATITUDE, longitude = LONGITUDE))]
 #[get("/get_weather")]
 /// Get the weather forcast based on the latitude and longitude
-pub async fn get_weather(client: web::Data<Client>) -> HttpResponse {
+pub async fn get_weather(client: web::Data<reqwest::Client>) -> HttpResponse {
+    warn!("Getting weather");
     let return_val = match lat_weather(client, LATITUDE, LONGITUDE).await {
         Ok(forecast) => forecast.forecast,
         Err(err) => {
@@ -71,7 +72,7 @@ pub async fn get_weather(client: web::Data<Client>) -> HttpResponse {
 
 #[instrument(name = "Get Weather", skip(client), target = "backend", fields(latitude = LATITUDE, longitude = LONGITUDE))]
 async fn lat_weather(
-    client: web::Data<Client>,
+    client: web::Data<reqwest::Client>,
     lat: &str,
     long: &str,
 ) -> Result<WeatherForecast, WeatherError> {
@@ -83,7 +84,7 @@ async fn lat_weather(
         .into_inner()
         .as_ref()
         .get(&url)
-        .header("User-Agent", "old_mcdonald/0.1.0")
+        .header("User-Agent", "/0.1.0")
         .header("Accept", "*/*")
         .header("Connection", "keep-alive")
         .header("Host", "api.weather.gov")
@@ -133,8 +134,6 @@ async fn lat_weather(
         "https://api.weather.gov/gridpoints/{}/{grid_x},{grid_y}",
         key.replace('\"', ""),
     );
-
-    // let url = "https://api.weather.gov/gridpoints/KEY/130,75";
 
     warn!("The second URL: {}", url);
 
