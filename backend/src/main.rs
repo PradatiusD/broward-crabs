@@ -12,7 +12,7 @@ async fn main() -> io::Result<()> {
 
     let application = Application::build(settings, None).await?;
 
-    tracing::event!(target: "aj_studying", tracing::Level::INFO, "Listening on port http://127.0.0.1/");
+    tracing::event!(target: "backend", tracing::Level::INFO, "Listening on IP http://127.0.0.1/");
 
     application.run_until_stopped().await?;
 

@@ -1,8 +1,9 @@
 use actix_web::{get, HttpResponse, Responder};
+use tracing::{info, instrument};
 
-#[tracing::instrument]
+#[instrument(name = "Health Check", target = "backend")]
 #[get("/health_check")]
 pub async fn health_check() -> impl Responder {
-    tracing::event!(target: "aj_studying", tracing::Level::DEBUG, "Health check endpoint called.");
+    info!("Request received for health check");
     HttpResponse::Ok().json("I'm alive!")
 }

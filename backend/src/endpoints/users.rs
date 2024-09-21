@@ -4,10 +4,11 @@ use actix_web::{
     HttpResponse,
 };
 use mongodb::bson::oid::ObjectId;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, instrument};
 
 use crate::models::mongo::{MongoRepo, TrafficData, User};
 
+#[instrument(name = "Create User", target = "backend", skip(client, new_user))]
 #[post("/user")]
 pub async fn create(client: Data<mongodb::Database>, new_user: Json<User>) -> HttpResponse {
     info!("Creating user");

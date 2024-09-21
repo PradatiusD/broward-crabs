@@ -7,9 +7,10 @@ use tracing::error;
 use crate::{
     endpoints::{
         health::health_check,
-        users::{create, delete_user, get_user, get_users, update_user},
+        users::{create, create_traffic, delete_user, get_user, get_users, update_user},
     },
     settings::{self, Settings},
+    weather::get_weather,
 };
 
 pub struct Application {
@@ -96,13 +97,15 @@ async fn run(
             .wrap(middleware::Logger::default())
             .app_data(db_data.clone())
             .app_data(redis_pool.clone())
+            .service(get_weather)
+            .service(health_check)
             // Database operations
             .service(create)
             .service(get_user)
             .service(update_user)
             .service(delete_user)
             .service(get_users)
-            .service(health_check)
+            .service(create_traffic)
     })
     .keep_alive(KeepAlive::Os) // Keep the connection alive; OS handled
     .disable_signals() // Disable the signals to allow the OS to handle the signals
