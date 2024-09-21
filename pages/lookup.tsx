@@ -46,7 +46,7 @@ const carInfo =[
     }
 ];
 export default function LandingPage () {
-    const [zipCode, setZipCode] = useState("")
+    const [zipCode, setZipCode] = useState("33129")
     const [make,setMake] = useState("")
     const [model, setModel] = useState("")
     const [year, setYear] = useState("")
@@ -59,6 +59,7 @@ export default function LandingPage () {
             year,
             zipCode
         })
+        window.location.pathname = '/'
     }
     const brandModels = carInfo.find(function (carData) {
         if(carData.make == make){
@@ -75,7 +76,7 @@ export default function LandingPage () {
                 <form onSubmit={handleSubmit}>
                 <h5 className="header-label">Where are you headed?</h5>
                     <div className="form-group zip-code pt-4">
-                        <input type="text" className="form-control" id="Zipcode" aria-describedby="ZipcodeHelp" onChange={(e) => {
+                        <input type="text" className="form-control" id="Zipcode" aria-describedby="ZipcodeHelp" value={zipCode} onChange={(e) => {
                             setZipCode(e.target.value)
                         }}
                                placeholder="Enter Zipcode"/>

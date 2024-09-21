@@ -169,9 +169,12 @@ function MapComponent() {
         }
 
       </GoogleMap>
+      <div style={{maxWidth: '480px', margin: '1rem auto'}}>
+        <p className="alert-info alert"><strong>Keep an eye out!</strong> You are at medium risk of flood</p>
+      </div>
       <section className="map-controls">
         <div>
-          <label>
+        <label>
             <span>Traffic</span>
             <Switch onChange={() => {
               setTraffic(!traffic)
