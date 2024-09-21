@@ -1,0 +1,18 @@
+.header-label {
+    color: #333;
+    font-family: Poppins, serif;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 120%;
+}
+.zip-code {
+    border-radius: 4px;
+}
+.footer{
+    display: flex;
+    width: 100%;
+    padding: 16px 24px 24px 24px;
+    justify-content: space-between;
+    align-items: center;
+}
