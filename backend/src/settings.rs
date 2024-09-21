@@ -10,6 +10,17 @@ pub struct Settings {
     pub redis: Redis,
 }
 
+#[derive(Deserialize, Clone, Debug)]
+pub struct Secret {
+    pub open_ai_key: OpenAI,
+}
+
+#[derive(Deserialize, Clone, Debug)]
+pub struct OpenAI {
+    pub api_key: String,
+    pub engine: String,
+}
+
 /// Redis setting for the entire application
 #[derive(Deserialize, Clone, Debug)]
 pub struct Redis {

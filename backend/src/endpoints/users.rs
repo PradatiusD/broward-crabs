@@ -5,7 +5,7 @@ use actix_web::{
     web::{Data, Json, Path},
     HttpResponse,
 };
-use mongodb::bson::{oid::ObjectId, Bson};
+use mongodb::bson::oid::ObjectId;
 use tracing::{debug, error, info, instrument};
 
 use crate::models::mongo::{MongoRepo, TrafficData, User};
