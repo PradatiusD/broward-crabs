@@ -57,6 +57,7 @@ export default function LandingPage () {
             model,
             make,
             year,
+            zipCode
         })
     }
     const brandModels = carInfo.find(function (carData) {
@@ -69,7 +70,7 @@ export default function LandingPage () {
         <>
             <div className="d-flex flex-column justify-content-center align-items-center" style={{ minHeight: 'calc(100vh - 102px)' }}>
                 <div className="mb-4 lookup-background">
-                    <Image src={background}  alt="instagram logo"/>
+                    <Image src={background} alt="instagram logo"/>
                 </div>
                 <form onSubmit={handleSubmit}>
                 <h5 className="header-label">Where are you headed?</h5>

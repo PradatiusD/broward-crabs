@@ -2,8 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import  { extractColors } from 'extract-colors'
 import getPixels from "get-pixels";
 import proj4 from 'proj4';
-import axios from 'axios';
 import {FinalColor} from "extract-colors/lib/types/Color";
+import {callChatGPT} from "./utils";
 
 const getImageAsync = async (url: string, type: string) => {
   return new Promise((resolve, reject) => {
@@ -16,36 +16,6 @@ const getImageAsync = async (url: string, type: string) => {
   })
 }
 
-
-
-const apiKey = process.env.OPEN_API_KEY;
-const apiUrl = 'https://api.openai.com/v1/chat/completions';
-
-async function callChatGPT(prompt: string) {
-  try {
-    const response = await axios.post(
-      apiUrl,
-      {
-        model: 'gpt-3.5-turbo', // Or 'gpt-4' depending on the version you want to use
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 100, // Adjust based on your needs
-        temperature: 0.7,  // Adjust for creativity
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-      }
-    );
-
-    const result = response.data.choices[0].message.content;
-    console.log('Response from GPT:', result);
-    return result;
-  } catch (error) {
-    console.error('Error calling OpenAI API:', error);
-  }
-}
 
 function createArgSisCoordinates (lat, lng) {
   const wgs84 = 'EPSG:4326'; // WGS84 Lat/Lng
