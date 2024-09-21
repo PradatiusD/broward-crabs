@@ -6,7 +6,7 @@ import background from "./background.svg";
 const carInfo =[
     {
         "make": "Toyota",
-        "models": ["Camry", "Corolla", "Prius", "RAV4", "Highlander"]
+        "models": ["Camry", "Corolla", "Prius", "RAV4", "Highlander"],
     },
     {
         "make": "Honda",
@@ -46,8 +46,23 @@ const carInfo =[
     }
 ];
 export default function LandingPage () {
-   const [make,setMake] = useState("")
+    const [zipCode, setZipCode] = useState("")
+    const [make,setMake] = useState("")
+    const [model, setModel] = useState("")
+    const [year, setYear] = useState("")
+
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        console.log({
+            model,
+            make,
+            year,
+        })
+    }
     const brandModels = carInfo.find(function (carData) {
+        if(carData.make == make){
+            console.log(carData.models)
+        }
         return carData.make === make
     })
     return (
@@ -56,10 +71,12 @@ export default function LandingPage () {
                 <div className="mb-4 lookup-background">
                     <Image src={background}  alt="instagram logo"/>
                 </div>
-                <form>
+                <form onSubmit={handleSubmit}>
                 <h5 className="header-label">Where are you headed?</h5>
                     <div className="form-group zip-code pt-4">
-                        <input type="text" className="form-control" id="Zipcode" aria-describedby="ZipcodeHelp"
+                        <input type="text" className="form-control" id="Zipcode" aria-describedby="ZipcodeHelp" onChange={(e) => {
+                            setZipCode(e.target.value)
+                        }}
                                placeholder="Enter Zipcode"/>
                     </div>
                     <div className="form-group pt-4">
@@ -75,7 +92,9 @@ export default function LandingPage () {
                         </select>
                     </div>
                     <div className="car-model pt-4 pb-4">
-                        <select className="form-select" aria-label="Default select example">
+                        <select className="form-select" aria-label="Default select example" onChange={(e)=>{
+                            setModel(e.target.value)
+                        }}>
                             <option>Car Model</option>
                             {brandModels && brandModels.models.map((modelName) =>{
                                 return(
@@ -84,8 +103,14 @@ export default function LandingPage () {
                             })}
                         </select>
                     </div>
-                    <Link href="/results">
-                        <button type="button" className="btn btn-primary btn-md rounded-lg">Search</button>
+                    <div className="pb-4">
+                        <input type="text" value={year} pattern="\d{4}" onChange={(e) =>{
+                            setYear(e.target.value)
+                        }} className="form-control pt" id="car-year" aria-describedby="CarYearHelp"
+                               placeholder="Enter Year"/>
+                    </div>
+                    <Link href="/">
+                        <button className="btn btn-primary btn-md rounded-lg" onClick={handleSubmit}>Search</button>
                     </Link>
                 </form>
             </div>

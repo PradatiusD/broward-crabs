@@ -7,11 +7,10 @@
     line-height: 120%;
 }
 .lookup-background {
-    background-image: url("");
+    background-image: url("/pages/background.svg");
+
 }
-.zip-code {
-    border-radius: 4px;
-}
+
 .footer {
     display: flex;
     width: 100%;
