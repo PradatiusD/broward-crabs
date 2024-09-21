@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 
 const MapComponent = () => {
   const [map, setMap] = useState(null);
-
+  console.log(map)
   const onLoad = useCallback((map) => {
     setMap(map);
   }, []);
