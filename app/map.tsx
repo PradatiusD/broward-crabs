@@ -24,6 +24,11 @@ type TrafficData = {
   Latitude: number
 }
 
+declare global {
+  interface Window {
+    trafficData: TrafficData[];
+  }
+}
 
 function MapComponent() {
   const { isLoaded } = useJsApiLoader({
@@ -32,11 +37,11 @@ function MapComponent() {
   })
 
   const [, setMap] = React.useState(null)
-  const [trafficData, setTrafficData] = React.useState([])<TrafficData[]>
+  const [trafficData, setTrafficData] = React.useState([] as TrafficData[])
 
   React.useEffect(() => {
     setTrafficData(window.trafficData as TrafficData[])
-  })
+  }, [])
 
   const onLoad = React.useCallback(function callback(map) {
     setMap(map)
