@@ -1,15 +1,8 @@
-import 'bootstrap/dist/css/bootstrap.css';
-
 import React from "react";
 
-export default function LandingPage () {
+export default function Lookup () {
     return (
-        <>
-        <div>
-            <nav className="navbar navbar-expand-lg navbar-light bg-light">
-                <a className="navbar-brand mx-auto" href="#">Navbar</a>
-            </nav>
-        </div>
+      <>
             <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
                 <form className="p-4 border rounded bg-light" style={{ width: '300px' }}>
                     <div className="form-group">
@@ -29,6 +22,6 @@ export default function LandingPage () {
                     </div>
                 </form>
             </div>
-    </>
+      </>
     );
 }
