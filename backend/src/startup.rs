@@ -11,6 +11,7 @@ use crate::{
             create, create_traffic, delete_user, get_traffic, get_user, get_users, update_user,
         },
     },
+    open_ai::ai,
     settings::{self, Settings},
     weather::get_weather,
 };
@@ -96,7 +97,7 @@ async fn run(
     let db_data = Data::new(db_pool);
 
     // Redis connection pool
-    let cfg = deadpool_redis::Config::from_url(settings.redis.url);
+    let cfg = deadpool_redis::Config::from_url(settings.redis.url.clone());
     let redis_pool = cfg
         .create_pool(Some(deadpool_redis::Runtime::Tokio1))
         .expect("Failed to create Redis pool");
@@ -109,8 +110,10 @@ async fn run(
             .app_data(db_data.clone())
             .app_data(redis_pool.clone())
             .app_data(Data::new(reqwest_cliet.clone()))
+            .app_data(Data::new(settings.clone()))
             .service(get_weather)
             .service(health_check)
+            .service(ai)
             // Database operations
             .service(create)
             .service(get_user)
