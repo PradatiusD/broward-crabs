@@ -46,15 +46,32 @@ impl Display for User {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct TrafficData {
+    pub create_time: String,
+    pub signal: String,
+    pub address: String,
+    pub location: String,
+    pub grid: String,
+    pub map_x: Option<String>,
+    pub map_y: Option<String>,
+    pub longitude: f64,
+    pub latitude: f64,
+}
+
 #[allow(clippy::module_name_repetitions)]
 pub struct MongoRepo {
     collection: Collection<User>,
+    traffic_collection: Option<Collection<TrafficData>>,
 }
 
 impl MongoRepo {
     #[must_use]
     pub const fn new(collection: Collection<User>) -> Self {
-        Self { collection }
+        Self {
+            collection,
+            traffic_collection: None,
+        }
     }
 
     /// # Results
@@ -272,5 +289,46 @@ impl MongoRepo {
             .expect("Failed to delete user in collection");
 
         Ok(deleted_doc)
+    }
+
+    /// # Results
+    ///   - Returns an `TrafficData` if the traffic is successfully updated in the collection
+    /// # Errors
+    ///   - Returns an `Error` if the document fails to update in the collection
+    /// # Panics
+    ///   - If the document fails to update in the collection
+    pub async fn save_traffic(&self, traffic: TrafficData) -> Result<(), Error> {
+        //  {
+        //     "CreateTime": "2024-09-20T16:59:34",
+        //     "Signal": "TRAFFIC ACCIDENT WITH INJURIES",
+        //     "Address": "NW 33RD ST / NW 87TH AVE",
+        //     "Location": "KENDALL REG : LAT: <25.805839>  LONG: <-80.337773>",
+        //     "Grid": "1066",
+        //     "MapX": null,
+        //     "MapY": null,
+        //     "Longitude": -80.33726338,
+        //     "Latitude": 25.80530441
+        // }
+
+        let traffic = TrafficData {
+            create_time: traffic.create_time,
+            signal: traffic.signal,
+            address: traffic.address,
+            location: traffic.location,
+            grid: traffic.grid,
+            map_x: traffic.map_x,
+            map_y: traffic.map_y,
+            longitude: traffic.longitude,
+            latitude: traffic.latitude,
+        };
+
+        self.traffic_collection
+            .clone()
+            .expect("Traffic collection not found")
+            .insert_one(traffic)
+            .await
+            .expect("Failed to insert document into collection");
+
+        Ok(())
     }
 }
