@@ -1,6 +1,7 @@
 'use client'
 import React from 'react'
 import {GoogleMap, GroundOverlay, Marker, TrafficLayer, useJsApiLoader} from '@react-google-maps/api';
+import Switch from "react-switch";
 
 const containerStyle = {
   width: '100%',
@@ -70,6 +71,11 @@ function MapComponent() {
     setMap(null)
   }, [])
 
+  const [groundWaterOverlay, setGroundWaterOverlay] = React.useState(false)
+  const [stormSurgeOverlay, setStormSurgeOverlay] = React.useState(false)
+  const [accidentPins, setAccidentPins] = React.useState(false)
+  const [traffic, setTraffic] = React.useState(false)
+
   if (!isLoaded) {
     return <></>
   }
@@ -117,39 +123,89 @@ function MapComponent() {
 
   console.log(mercatorBbox)
 
-
 // The original URL with a bbox to replace
-  const originalUrl = "https://gisweb.miamidade.gov/arcgis/rest/services/VulnerabilityViewer/MD_Groundwater/MapServer/export?dpi=96&transparent=true&format=png32&layers=show%3A0&bbox=-9056422.470406085%2C2897053.810642499%2C-8847290.761017762%2C3025926.6403313554&bboxSR=102100&imageSR=102100&size=1368%2C843&f=image"
-//   const originalUrl = "https://imageserverintra.miamidade.gov/arcgis/rest/services/DEMs/2021_5ft_DEM/ImageServer/exportImage?f=image&bandIds=&renderingRule=%7B%22rasterFunction%22%3A%22Stretched_5ftDEMRender_BlueToBrown_2021%22%7D&bbox=-8996916.243885973%2C2926329.1924757934%2C-8886006.115844334%2C2992523.6589706666&imageSR=102100&bboxSR=102100&size=1451%2C866";
-
-// Interpolating the new bounding box into the URL
-  const updatedUrl = interpolateBoundingBoxInUrl(originalUrl, mercatorBbox);
-
-  console.log('Updated URL:', updatedUrl);
+//   const originalUrl = "https://gisweb.miamidade.gov/arcgis/rest/services/VulnerabilityViewer/MD_Groundwater/MapServer/export?dpi=96&transparent=true&format=png32&layers=show%3A0&bbox=-9056422.470406085%2C2897053.810642499%2C-8847290.761017762%2C3025926.6403313554&bboxSR=102100&imageSR=102100&size=1368%2C843&f=image"
 
   return (
-    <GoogleMap
-      mapContainerStyle={containerStyle}
-      center={center}
-      zoom={12}
-      onLoad={onLoad}
-      onUnmount={onUnmount}
-    >
-      <GroundOverlay
-        url={updatedUrl}
-        bounds={latLngBoxShifted}
-        opacity={0.5}
-      />
-      <TrafficLayer />
-      {
-        trafficData.map((trafficDataItem, index) => {
-          return (
-            <Marker key={index} label={trafficDataItem.Signal} position={{lat: trafficDataItem.Latitude, lng: trafficDataItem.Longitude}}/>
+    <>
+      <GoogleMap
+        mapContainerStyle={containerStyle}
+        center={center}
+        zoom={12}
+        onLoad={onLoad}
+        onUnmount={onUnmount}
+      >
+        {
+          groundWaterOverlay && (
+            <GroundOverlay
+              url={interpolateBoundingBoxInUrl("https://gisweb.miamidade.gov/arcgis/rest/services/VulnerabilityViewer/MD_Groundwater/MapServer/export?dpi=96&transparent=true&format=png32&layers=show%3A0&bbox=-9056422.470406085%2C2897053.810642499%2C-8847290.761017762%2C3025926.6403313554&bboxSR=102100&imageSR=102100&size=1368%2C843&f=image", mercatorBbox)}
+              bounds={latLngBoxShifted}
+              opacity={0.5}
+            />
           )
-        })
-      }
-    </GoogleMap>
+        }
+
+        {
+          stormSurgeOverlay && (
+            <GroundOverlay
+              url={interpolateBoundingBoxInUrl('https://gisweb.miamidade.gov/arcgis/rest/services/VulnerabilityViewer/MD_StormSurge/MapServer/export?dpi=96&transparent=true&format=png32&layers=show%3A6&bbox=-8990763.063109012%2C2911080.005332882%2C-8886197.208415033%2C2975516.4201771985&bboxSR=102100&imageSR=102100&size=1368%2C843&f=image', mercatorBbox)}
+              bounds={latLngBoxShifted}
+              opacity={0.5}
+            />
+          )
+        }
+
+        {
+          traffic && <TrafficLayer/>
+        }
+
+        {
+          accidentPins && trafficData.map((trafficDataItem, index) => {
+            return (
+              <Marker key={index} label={trafficDataItem.Signal}
+                      position={{lat: trafficDataItem.Latitude, lng: trafficDataItem.Longitude}}/>
+            )
+          })
+        }
+
+      </GoogleMap>
+      <section className="map-controls">
+        <div>
+          <label>
+            <span>Traffic</span>
+            <Switch onChange={() => {
+              setTraffic(!traffic)
+            }} checked={traffic}/>
+          </label>
+        </div>
+        <div>
+          <label>
+            <span>Accidents</span>
+            <Switch onChange={() => {
+              setAccidentPins(!accidentPins)
+            }} checked={accidentPins}/>
+          </label>
+        </div>
+        <div>
+          <label>
+            <span>Ground Water</span>
+            <Switch onChange={() => {
+              setGroundWaterOverlay(!groundWaterOverlay)
+            }} checked={groundWaterOverlay}/>
+          </label>
+        </div>
+        <div>
+          <label>
+            <span>Storm Surge</span>
+            <Switch onChange={() => {
+              setStormSurgeOverlay(!stormSurgeOverlay)
+            }} checked={stormSurgeOverlay}/>
+          </label>
+        </div>
+      </section>
+    </>
   )
 }
+
 
 export default MapComponent
